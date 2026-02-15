@@ -79,37 +79,40 @@ function IntroScreen({ onStart }) {
 }
 
 // ========== Quiz Screen ==========
+// 5-point scale: +2 (strongly A), +1 (slightly A), 0 (neutral), -1 (slightly B), -2 (strongly B)
+const scaleOptions = [
+  { value: 2, label: 'Aに近い', color: 'bg-purple-500', ring: 'ring-purple-400' },
+  { value: 1, label: 'ややA', color: 'bg-purple-400/60', ring: 'ring-purple-300' },
+  { value: 0, label: '中間', color: 'bg-white/30', ring: 'ring-white/40' },
+  { value: -1, label: 'ややB', color: 'bg-pink-400/60', ring: 'ring-pink-300' },
+  { value: -2, label: 'Bに近い', color: 'bg-pink-500', ring: 'ring-pink-400' },
+]
+
 function QuizScreen({ onComplete }) {
   const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState({})
+  const [scores, setScores] = useState({ initiative: 0, tempo: 0, expression: 0, adventure: 0 })
   const [selected, setSelected] = useState(null)
 
   const question = questions[current]
   const progress = ((current) / questions.length) * 100
 
   const handleSelect = (value) => {
-    if (selected) return
+    if (selected !== null) return
     setSelected(value)
 
-    const newAnswers = { ...answers }
-    if (!newAnswers[question.axis]) newAnswers[question.axis] = { a: 0, b: 0 }
-    if (value === 'A') {
-      newAnswers[question.axis].a += 1
-    } else {
-      newAnswers[question.axis].b += 1
-    }
-    setAnswers(newAnswers)
+    const newScores = { ...scores }
+    newScores[question.axis] += value
+    setScores(newScores)
 
     setTimeout(() => {
       if (current < questions.length - 1) {
         setCurrent(current + 1)
         setSelected(null)
       } else {
-        // Calculate type
-        const type = calculateType(newAnswers)
+        const type = calculateType(newScores)
         onComplete(type)
       }
-    }, 600)
+    }, 700)
   }
 
   return (
@@ -137,7 +140,7 @@ function QuizScreen({ onComplete }) {
           className="flex-1 flex flex-col"
         >
           {/* Question */}
-          <div className="mb-10">
+          <div className="mb-8">
             <p className="text-xs text-purple-300 mb-3 tracking-wider">
               {question.axis === 'initiative' && '// 主導権'}
               {question.axis === 'tempo' && '// テンポ'}
@@ -149,47 +152,53 @@ function QuizScreen({ onComplete }) {
             </h2>
           </div>
 
-          {/* Options */}
-          <div className="space-y-4 flex-1">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelect('A')}
-              className={`w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 ${
-                selected === 'A'
-                  ? 'bg-purple-600/30 border-purple-400 shadow-lg shadow-purple-500/20'
-                  : selected === 'B'
-                  ? 'bg-white/3 border-white/5 opacity-40'
-                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                  selected === 'A' ? 'bg-purple-500 border-purple-400 text-white' : 'border-white/20 text-white/40'
-                }`}>A</span>
-                <span className="text-base md:text-lg leading-relaxed">{question.optionA.text}</span>
-              </div>
-            </motion.button>
+          {/* Option A label */}
+          <div className="glass-card p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-xs font-bold text-purple-300">A</span>
+              <span className="text-sm md:text-base text-white/80">{question.optionA.text}</span>
+            </div>
+          </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelect('B')}
-              className={`w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 ${
-                selected === 'B'
-                  ? 'bg-pink-600/30 border-pink-400 shadow-lg shadow-pink-500/20'
-                  : selected === 'A'
-                  ? 'bg-white/3 border-white/5 opacity-40'
-                  : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                  selected === 'B' ? 'bg-pink-500 border-pink-400 text-white' : 'border-white/20 text-white/40'
-                }`}>B</span>
-                <span className="text-base md:text-lg leading-relaxed">{question.optionB.text}</span>
-              </div>
-            </motion.button>
+          {/* 5-point scale */}
+          <div className="flex items-center justify-between gap-2 mb-6 px-2">
+            {scaleOptions.map((opt, i) => (
+              <motion.button
+                key={i}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleSelect(opt.value)}
+                className={`flex flex-col items-center gap-2 transition-all duration-300 ${
+                  selected !== null && selected !== opt.value ? 'opacity-30' : ''
+                }`}
+              >
+                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                  selected === opt.value
+                    ? `${opt.color} ${opt.ring} ring-2 scale-110 shadow-lg`
+                    : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30'
+                }`}>
+                  {selected === opt.value && (
+                    <motion.svg
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-5 h-5 text-white"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </motion.svg>
+                  )}
+                </div>
+                <span className="text-[10px] md:text-xs text-white/40 whitespace-nowrap">{opt.label}</span>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Option B label */}
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 w-7 h-7 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-xs font-bold text-pink-300">B</span>
+              <span className="text-sm md:text-base text-white/80">{question.optionB.text}</span>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -197,11 +206,11 @@ function QuizScreen({ onComplete }) {
   )
 }
 
-function calculateType(answers) {
-  const l1 = (answers.initiative?.a || 0) >= (answers.initiative?.b || 0) ? 'L' : 'F'
-  const l2 = (answers.tempo?.a || 0) >= (answers.tempo?.b || 0) ? 'S' : 'Q'
-  const l3 = (answers.expression?.a || 0) >= (answers.expression?.b || 0) ? 'V' : 'A'
-  const l4 = (answers.adventure?.a || 0) >= (answers.adventure?.b || 0) ? 'T' : 'C'
+function calculateType(scores) {
+  const l1 = scores.initiative >= 0 ? 'L' : 'F'
+  const l2 = scores.tempo >= 0 ? 'S' : 'Q'
+  const l3 = scores.expression >= 0 ? 'V' : 'A'
+  const l4 = scores.adventure >= 0 ? 'T' : 'C'
   return l1 + l2 + l3 + l4
 }
 
