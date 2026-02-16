@@ -14,7 +14,7 @@ function IntroScreen({ onStart, onShowTypes, onShowAbout }) {
     >
       {/* Logo */}
       <motion.img
-        src="/logo.png"
+        src={`${import.meta.env.BASE_URL}logo.png`}
         alt="夜の性格診断"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
