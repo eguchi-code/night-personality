@@ -9,8 +9,8 @@ const typeCodes = Object.keys(types)
 const typeImageUrl = (code) => `${import.meta.env.BASE_URL}images/types/${code}.webp`
 
 function TypeImage({ code, size = 'md', className = '' }) {
-  const sizes = { xs: 'w-8 h-8', sm: 'w-10 h-10', md: 'w-14 h-14', lg: 'w-20 h-20', xl: 'w-32 h-32 md:w-40 md:h-40' }
-  const borders = { xs: 'border', sm: 'border', md: 'border-2', lg: 'border-2', xl: 'border-2' }
+  const sizes = { xs: 'w-8 h-8', sm: 'w-10 h-10', md: 'w-14 h-14', lg: 'w-20 h-20', xl: 'w-32 h-32 md:w-40 md:h-40', '2xl': 'w-48 h-48 md:w-56 md:h-56' }
+  const borders = { xs: 'border', sm: 'border', md: 'border-2', lg: 'border-2', xl: 'border-2', '2xl': 'border-2' }
   return (
     <div className={`${sizes[size]} rounded-full overflow-hidden flex-shrink-0 ${borders[size]} border-white/20 shadow-lg shadow-purple-500/10 ${className}`}>
       <img src={typeImageUrl(code)} alt={types[code]?.name || code} className="w-full h-full object-cover" loading="lazy" />
@@ -355,7 +355,7 @@ const axes = [
   { key: 'adventure',  label: '冒険度', left: 'T', right: 'C', leftLabel: '刺激派', rightLabel: '安定派' },
 ]
 
-function generateResultImage(typeCode, data, scores) {
+async function generateResultImage(typeCode, data, scores) {
   const W = 1080, H = 1920
   const canvas = document.createElement('canvas')
   canvas.width = W; canvas.height = H
@@ -371,7 +371,28 @@ function generateResultImage(typeCode, data, scores) {
 
   let y = 100
   text('あなたの夜の性格は…', W/2, y, { font: '600 36px sans-serif', color: 'rgba(255,255,255,0.4)' }); y += 80
-  text(data.emoji, W/2, y, { font: '140px sans-serif' }); y += 180
+
+  // キャラクター画像を円形で描画
+  const imgSize = 320
+  try {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = typeImageUrl(typeCode) })
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(W/2, y + imgSize/2, imgSize/2, 0, Math.PI * 2)
+    ctx.closePath()
+    ctx.clip()
+    ctx.drawImage(img, W/2 - imgSize/2, y, imgSize, imgSize)
+    ctx.restore()
+    // 円形ボーダー
+    ctx.beginPath()
+    ctx.arc(W/2, y + imgSize/2, imgSize/2, 0, Math.PI * 2)
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)'
+    ctx.lineWidth = 3
+    ctx.stroke()
+  } catch { /* フォールバック: 絵文字 */ text(data.emoji, W/2, y, { font: '140px sans-serif' }) }
+  y += imgSize + 40
   text(typeCode, W/2, y, { font: '600 52px monospace', color: '#c4b5fd' }); y += 80
   text(data.name, W/2, y, { font: '900 76px sans-serif' }); y += 100
   text(data.subtitle, W/2, y, { font: '400 36px sans-serif', color: 'rgba(255,255,255,0.5)' }); y += 90
@@ -420,8 +441,8 @@ function ResultScreen({ typeCode, scores, onRestart }) {
 
   const shareText = `【夜の性格診断】\n私の夜タイプは「${data.name}」${data.emoji}でした！\n${data.subtitle}\n\n#夜の性格診断 #NightPersonality`
 
-  const handleShowImage = useCallback(() => {
-    const canvas = generateResultImage(typeCode, data, scores)
+  const handleShowImage = useCallback(async () => {
+    const canvas = await generateResultImage(typeCode, data, scores)
     const dataUrl = canvas.toDataURL('image/png')
     const w = window.open('', '_blank')
     if (w) {
@@ -457,8 +478,8 @@ function ResultScreen({ typeCode, scores, onRestart }) {
       {phase !== 'analyze' && (
         <>
           <motion.div initial={{ opacity: 0, scale: 0.5, rotateY: 90 }} animate={{ opacity: 1, scale: 1, rotateY: 0 }} transition={{ duration: 0.8, type: 'spring', bounce: 0.4 }} className="text-center mb-8" style={{ perspective: '1000px' }}>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, duration: 0.5, type: 'spring', bounce: 0.5 }} className="mb-4">
-              <TypeImage code={typeCode} size="xl" />
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, duration: 0.5, type: 'spring', bounce: 0.5 }} className="mb-4 flex justify-center">
+              <TypeImage code={typeCode} size="2xl" />
             </motion.div>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-white/40 text-sm tracking-widest mb-2">YOUR NIGHT TYPE</motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.6 }}>
