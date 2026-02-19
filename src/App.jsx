@@ -72,7 +72,7 @@ const hearts = (n) => '♥'.repeat(n) + '♡'.repeat(5 - n)
 function IntroScreen({ onStart, onShowTypes, onShowAbout, onShowCompat, onShowMatrix }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -30 }} className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      <motion.img src={`${import.meta.env.BASE_URL}logo.png`} alt="夜の性格診断" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.0, type: 'spring', bounce: 0.3 }} className="w-72 md:w-96 mb-10" />
+      <motion.img src={`${import.meta.env.BASE_URL}logo.webp`} alt="夜の性格診断" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.0, type: 'spring', bounce: 0.3 }} className="w-72 md:w-96 mb-10" />
       <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0, duration: 0.8 }} className="text-white/70 text-center max-w-md mb-12 text-sm md:text-base leading-relaxed">
         あなたの夜の過ごし方には、<br className="md:hidden" />隠された<span className="text-purple-300 font-medium">本当の性格</span>が表れる。<br /><br />12の質問に答えるだけで、<br className="md:hidden" />全16タイプから<span className="text-pink-300 font-medium">あなたの夜型</span>を診断。
       </motion.p>
